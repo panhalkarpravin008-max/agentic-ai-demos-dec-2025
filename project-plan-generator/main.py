@@ -7,6 +7,8 @@ from pathlib import Path
 from datetime import datetime
 from models.state import ProjectPlanState
 from workflows import create_plan_workflow
+from dotenv import load_dotenv
+
 
 
 def load_requirement(requirement_input: str) -> str:
