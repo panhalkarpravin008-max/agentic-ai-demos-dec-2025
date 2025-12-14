@@ -1,1 +1,1 @@
-Create a fitness tracking app with workout logging, progress charts, and social sharing
+Create a app to play music using streaming and has support for podcasts.
