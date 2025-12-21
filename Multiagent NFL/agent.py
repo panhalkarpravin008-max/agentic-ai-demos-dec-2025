@@ -209,7 +209,36 @@ def web_scrape(url: str, max_chars: int = DEFAULT_SCRAPE_CHARS) -> str:
         }
         return json.dumps(error_message, ensure_ascii=True)
 
+@tool("mcp_nfl_query")
+def mcp_nfl_query(endpoint: str, params: dict | None = None) -> str:
+    """
+    Query the MCP server for NFL data.
 
+    This tool retrieves structured mock NFL data from an MCP-compatible
+    backend service. It should be preferred over web_search and web_scrape
+    whenever MCP data is available.
+
+    Args:
+        endpoint (str): MCP API endpoint (e.g. "/passing-leaders").
+        params (dict, optional): Query parameters to send with the request.
+
+    Returns:
+        str: JSON-encoded response from the MCP server.
+    """
+    params = params or {}
+    query = urlencode(params)
+    url = f"{MCP_BASE_URL}{endpoint}"
+    if query:
+        url += f"?{query}"
+
+    request = Request(url, headers={"User-Agent": USER_AGENT})
+    context = None
+    if url.startswith("https") and not MCP_VERIFY_SSL:
+        context = ssl._create_unverified_context()
+
+    with urlopen(request, timeout=MCP_TIMEOUT_SECONDS, context=context) as response:
+        payload = response.read().decode("utf-8")
+        return payload
 
 @tool("current_datetime")
 def current_datetime(tz: str = "UTC", iso: bool = True) -> str:
@@ -258,6 +287,7 @@ def build_agent() -> any:
     tools = [
         web_search,
         web_scrape,
+        # mcp_nfl_query,
         current_datetime
     ]
 
@@ -273,17 +303,19 @@ def build_agent() -> any:
             2. If the question requires factual, ranked, or numeric information
             (such as leaders, stats, standings, injuries, or depth charts),
             you MUST call web_search to find authoritative sources.
-            3. If web_search is called, you MUST extract facts from at least one
+            3. Only if MCP data is NOT available may you fall back to web_search
+            followed by web_scrape.
+            4. If web_search is called, you MUST extract facts from at least one
             authoritative source by calling web_scrape before answering.
             Never answer using links alone.
-            4. Prefer official or authoritative sources in this order:
+            5. Prefer official or authoritative sources in this order:
             - Pro-Football-Reference
             - NFL.com
             - ESPN
             - StatMuse
-            5. Only provide a final answer AFTER factual data has been extracted
+            6. Only provide a final answer AFTER factual data has been extracted
             via web_scrape.
-            6. If scraping fails, clearly state that the data could not be retrieved
+            7. If scraping fails, clearly state that the data could not be retrieved
             and explain why.
 
             Answer guidelines:
