@@ -1,0 +1,7 @@
+fastmcp
+mcp
+langchain-core
+langchain-openai
+langgraph
+python-dotenv
+psycopg2-binary
